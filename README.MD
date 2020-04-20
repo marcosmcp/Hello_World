@@ -29,7 +29,7 @@
 ```
 Planejamento de Estudo com base na RoadMAP - Cada bolinha vermelha representa 20 % ou + do conhecimento adquirido até agora.
 
-![devops_roadmap](https://user-images.githubusercontent.com/26554450/79774312-04669f00-8309-11ea-9348-e956b7530586.png? | width=300)
+![devops_roadmap](https://user-images.githubusercontent.com/26554450/79774312-04669f00-8309-11ea-9348-e956b7530586.png? :height="50%" width="50%" )
 
 | Contato:                                           |
 |----------------------------------------------------|
