@@ -1,0 +1,69 @@
+#!/bin/bash
+
+cd /root
+
+# Configure user
+useradd svc_devtools -m -s /bin/bash -c 'Devtools User'
+usermod svc_devtools -p bY2HCv@6uf
+usermod svc_devtools -aG wheel
+
+# Basic configuration (Install git/ansible/vim)
+sudo yum repolist && yum install vim git wget sudo -y
+sudo amazon-linux-extras install ansible2 -y
+sudo yum update -y
+
+# Configure SSH Credentials to bitbucket
+mkdir -p ~/.ssh/
+echo -e "Host *\n\tStrictHostKeyChecking no" > ~/.ssh/config
+echo "-----BEGIN OPENSSH PRIVATE KEY-----
+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
+-----END OPENSSH PRIVATE KEY-----" > ~/.ssh/id_rsa
+
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDQbYAJPmVsn61knUT0ggcrdtspdxoFFMn7GRqGAIbBFTdBFdgIujLjf3CRRMMfpl65PAjgOq4RXnbT50qGuJK+23nac52Fkcu6JeaXtvC4FAr4i2zMU+gLVQ7JMhVNjuwIdFHQIfcyTVkglgKs6oXD2byjjxMs7U50t+OLKq9JMd+K6wHC0GOs0tcUoHUo/pB9ua2Fd20thaYIc4oXaj0BiRjhvdOt6DOk5KtYCh84sSbPbIL6Qv+GaGyMeaEymI3mMoq7kgAVGPtlhkwxXmujN+hFwexqGWGG1unTcQSEj11J6iAScIzEOs17HZwf/gzEIBjowTnrBQp6S0pujED+PT8QOUPBu3bf0AgNjx5zLrAPB+h5a7ZhrbIP/FwA5PP38K5CNHZRpoZk6IQ80CRADIkXrGaw8xvuhCbVPpq906tdkk/GxPvYo1iViY3EmPHWp9USF7ceJbt6UUJ5uC/7vMlU8ZYblxWoXoeDPGbPbfp/ht2Hv5svkOMgVC5nE2M=" > ~/.ssh/id_rsa.pub
+chmod 0600 ~/.ssh/*
+
+# Get the playbook to provision 
+cd /tmp/
+git clone git@bitbucket.org:vrbeneficiosteam/book-provisioning-ami.git
+
+cd /tmp/
+
+# Run the playbook and pray for a success run!
+ansible-playbook ./book-provisioning-ami/roles/provisioning-ami/tasks/install-ami.yml --become
+
+ansible-galaxy install robertdebock.minikube
