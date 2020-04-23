@@ -1,37 +1,19 @@
-----
-- name: Provisioning AMI
+- name: Provisioning Kubernetes 
   hosts: localhost
   become: true
 
   tasks:
 
-    - include_vars: "/tmp/book-provisioning-ami/host_vars/main.yml"
+    - include_vars: "/tmp/Hello_World/main.yml"
 
     - name: configure / Update yum packages
-      yum:
+      apt:
         name: '*'
         state: latest
         update_cache: yes
 
-    - name: 1.Check if EPEL repo is already configured.
-      stat: path={{ epel_repofile_path }}
-      register: epel_repofile_result
-
-    - name: 2.Install EPEL repo.
-      yum:
-        name: "{{ epel_repo_url }}"
-        state: present
-      register: result
-      when: not epel_repofile_result.stat.exists 
-
-    - name: 3.Import EPEL GPG key.
-      rpm_key:
-        key: "{{ epel_repo_gpg_key_url }}"
-        state: present
-      when: not epel_repofile_result.stat.exists
-
     - name: Install basic packages
-      yum:
+      apt:
         name: "{{ packages }}"
         state: present
       become: yes 
@@ -40,7 +22,6 @@
         - python3.7
         - curl
         - gcc
-        - gcc-c++
         - make
         - python3-pip
         - npm
@@ -55,24 +36,44 @@
         - sudo 
         - zip
         - bzip2
-        - ansible-lint 
         - nodejs
         - python-pip
-        - yum-utils
-        - device-mapper-persistent-data
         - lvm2
-        - amazon-linux-extras
-        - python-devel
+        - software-properties-common
+        - ca-certificates
         - apt-transport-https 
- 
-    - name: Instalando com Amazon Linux Extras2
-      shell: bash -lc 'sudo amazon-linux-extras install ruby{{ ruby_version }} docker'
-      
+
+    - name: Instando o Docker 
+      shell: | 
+        sudo apt-get update
+        sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+        sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+        sudo apt-get update
+        sudo apt install -y docker-ce
+        sudo chmod 777 /var/run/docker.sock
+
     - name: Install Docker Compose (if configured).
-      get_url:
-        url: https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-Linux-x86_64
-        dest: "{{ docker_compose_path }}"
-        mode: 0755
+      become: yes
+      shell: | 
+        curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+        cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+        deb https://apt.kubernetes.io/ kubernetes-xenial main
+        EOF
+
+    - name: Instalando KubeAdmin
+      become: yes
+      shell: | 
+        sudo apt-get update
+        sudo apt-get install -y kubelet kubeadm kubectl
+        sudo apt-mark hold kubelet kubeadm kubectl
+        exit
+
+    - name: apt update
+      become: yes
+      apt: 
+        name: '*'
+        state: latest
+        update_cache: yes
 
     - name: Start Docker service
       service:
@@ -83,30 +84,9 @@
  
     - name: Add user ec2-user docker group
       user:
-        name: ec2-user
+        name: ubuntu
         groups: docker
         append: yes
-
-    - name: Download nodejs
-      become: yes
-      shell: bash -lc 'curl -sL https://rpm.nodesource.com/setup_13.x | sudo -E bash -' 
-
-    - name: Install Chef Client
-      become: yes
-      shell: 
-        cmd: curl -L https://omnitruck.chef.io/install.sh | sudo bash -s -- -v {{ chef_client_version }}
-
-    - name: AWS CLI
-      become: yes
-      shell: | 
-        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-        unzip awscliv2.zip
-        sudo ./aws/install
-        exit 0 
-
-    - name: AWS CLI
-      become: yes
-      shell: pip3 install ansible-lint
 
     - name: Updating localtime
       command: /bin/cp /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
@@ -138,5 +118,5 @@
     - name: Configurando Client (kubectl)
       become: yes
       shell: | 
-      kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/2140ac876ef134e0ed5af15c65e414cf26827915/Documentation/kube-flannel.yml
-      kubectl taint nodes --all node-role.kubernetes.io/master-
+        kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/2140ac876ef134e0ed5af15c65e414cf26827915/Documentation/kube-flannel.yml
+        kubectl taint nodes --all node-role.kubernetes.io/master-
